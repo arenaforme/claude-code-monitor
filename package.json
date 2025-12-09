@@ -1,0 +1,23 @@
+{
+  "name": "claude-code-monitor",
+  "version": "1.0.0",
+  "description": "监控 Claude Code 运行并自动处理确认提示",
+  "main": "src/index.js",
+  "author": "cj_claude",
+  "license": "MIT",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js --debug"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "node-notifier": "^10.0.1",
+    "node-pty": "^1.0.0"
+  },
+  "keywords": [
+    "claude-code",
+    "monitor",
+    "automation",
+    "macos"
+  ]
+}
