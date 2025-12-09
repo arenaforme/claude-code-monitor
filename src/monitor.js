@@ -73,6 +73,12 @@ class ClaudeMonitor extends EventEmitter {
         return;
       }
 
+      // Ctrl+T 切换自动响应（Toggle）
+      if (key === '\u0014') {
+        this.emit('toggle-auto-response');
+        return;
+      }
+
       // 转发用户输入到 Claude Code
       if (this.ptyProcess) {
         this.ptyProcess.write(key);

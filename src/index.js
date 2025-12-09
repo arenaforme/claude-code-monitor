@@ -10,6 +10,8 @@ const config = require('./config');
 const ClaudeMonitor = require('./monitor');
 const Detector = require('./detector');
 const AutoResponder = require('./autoResponder');
+const notifier = require('node-notifier');
+const { execSync } = require('child_process');
 
 class MonitorApp {
   constructor() {
@@ -74,9 +76,15 @@ class MonitorApp {
       this._handleOutput(output);
     });
 
+    // 监听快捷键切换自动响应
+    this.monitor.on('toggle-auto-response', () => {
+      this._toggleAutoResponse();
+    });
+
     // 监听进程启动
     this.monitor.on('started', () => {
-      console.log('✅ Claude Code 已启动，监控中...\n');
+      console.log('✅ Claude Code 已启动，监控中...');
+      console.log('💡 按 Ctrl+T 切换自动响应开关\n');
       console.log('─'.repeat(60));
     });
 
@@ -93,6 +101,41 @@ class MonitorApp {
       console.error('   2. 是否需要调整 config.js 中的 claudeCommand 路径？');
       process.exit(1);
     });
+  }
+
+  /**
+   * 切换自动响应状态
+   */
+  _toggleAutoResponse() {
+    this.config.monitor.autoResponse = !this.config.monitor.autoResponse;
+    const isEnabled = this.config.monitor.autoResponse;
+
+    // 终端提示
+    const terminalMsg = isEnabled
+      ? '\n\x1b[42m\x1b[30m ✅ 自动响应已开启 \x1b[0m\n'
+      : '\n\x1b[41m\x1b[37m ⏸️  自动响应已关闭 \x1b[0m\n';
+    process.stdout.write(terminalMsg);
+
+    // 系统通知弹窗
+    const title = 'Claude Code 监控器';
+    const statusText = isEnabled ? '已开启' : '已关闭';
+    const message = `自动响应: ${statusText}\n当前状态: ${isEnabled ? '检测到提示时将自动回复' : '检测到提示时仅提醒，不自动回复'}`;
+
+    try {
+      // node-notifier 通知
+      notifier.notify({
+        title: title,
+        message: message,
+        sound: true,
+        timeout: 3
+      });
+
+      // macOS 原生通知（更可靠）
+      const script = `display notification "${message}" with title "${title}"`;
+      execSync(`osascript -e '${script}'`, { stdio: 'ignore' });
+    } catch (error) {
+      // 静默失败
+    }
   }
 
   /**
