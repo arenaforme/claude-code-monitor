@@ -20,8 +20,10 @@ class AutoResponder {
    * @param {Function} sendInputCallback - 发送输入的回调函数
    */
   async handle(rule, sendInputCallback) {
-    // 生成规则唯一标识（避免短时间内重复触发）
-    const ruleId = `${rule.name}_${Date.now()}`;
+    // 如果自动响应已关闭，不做任何处理
+    if (!this.config.monitor.autoResponse) {
+      return;
+    }
 
     // 显示提醒消息
     this._showAlert(rule);
@@ -32,14 +34,12 @@ class AutoResponder {
     }
 
     // 自动回复
-    if (this.config.monitor.autoResponse) {
-      if (rule.requireConfirmation) {
-        // 需要用户确认
-        await this._confirmAndRespond(rule, sendInputCallback);
-      } else {
-        // 直接自动回复
-        this._autoRespond(rule, sendInputCallback);
-      }
+    if (rule.requireConfirmation) {
+      // 需要用户确认
+      await this._confirmAndRespond(rule, sendInputCallback);
+    } else {
+      // 直接自动回复
+      this._autoRespond(rule, sendInputCallback);
     }
   }
 

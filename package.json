@@ -3,6 +3,10 @@
   "version": "1.0.0",
   "description": "监控 Claude Code 运行并自动处理确认提示",
   "main": "src/index.js",
+  "bin": {
+    "cm": "src/index.js",
+    "claude-monitor": "src/index.js"
+  },
   "author": "cj_claude",
   "license": "MIT",
   "scripts": {
@@ -11,6 +15,7 @@
   },
   "dependencies": {
     "chalk": "^4.1.2",
+    "commander": "^12.1.0",
     "node-notifier": "^10.0.1",
     "node-pty": "^1.0.0"
   },

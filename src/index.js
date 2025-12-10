@@ -6,6 +6,7 @@
  * @description 整合所有模块，启动监控服务（遵循 DIP 依赖倒置原则）
  */
 
+const { Command } = require('commander');
 const config = require('./config');
 const ClaudeMonitor = require('./monitor');
 const Detector = require('./detector');
@@ -13,12 +14,31 @@ const AutoResponder = require('./autoResponder');
 const notifier = require('node-notifier');
 const { execSync } = require('child_process');
 
+// 解析命令行参数
+const program = new Command();
+program
+  .name('claude-monitor')
+  .description('Claude Code 监控器 - 自动响应确认提示')
+  .version('1.0.0')
+  .option('-c, --continue', '继续上次对话（等同于 claude -c）')
+  .option('-r, --resume <id>', '恢复指定的对话（等同于 claude -r <id>）')
+  .option('-p, --print <id>', '打印指定对话内容（等同于 claude -p <id>）')
+  .option('--no-auto', '禁用自动响应，仅提醒')
+  .allowUnknownOption(true)  // 允许传递其他参数给 claude
+  .parse(process.argv);
+
 class MonitorApp {
-  constructor() {
+  constructor(options = {}) {
     this.config = config;
+    this.options = options;
     this.monitor = new ClaudeMonitor(config);
     this.detector = new Detector(config.detectionRules);
     this.responder = new AutoResponder(config);
+
+    // 根据命令行参数调整配置
+    if (options.auto === false) {
+      this.config.monitor.autoResponse = false;
+    }
 
     // 输出缓冲，用于避免重复检测
     this.lastTriggerTime = 0;
@@ -31,14 +51,56 @@ class MonitorApp {
     this._printBanner();
     this._setupMonitorListeners();
 
-    // 从命令行参数获取传递给 Claude Code 的参数
-    const claudeArgs = process.argv.slice(2);
+    // 构建传递给 Claude Code 的参数
+    const claudeArgs = this._buildClaudeArgs();
 
     // 启动 Claude Code
     this.monitor.start(claudeArgs);
 
     // 处理 Ctrl+C 退出
     this._setupExitHandlers();
+  }
+
+  /**
+   * 构建 Claude Code 命令行参数
+   */
+  _buildClaudeArgs() {
+    const args = [];
+    const opts = this.options;
+
+    // 继续上次对话
+    if (opts.continue) {
+      args.push('-c');
+    }
+
+    // 恢复指定对话
+    if (opts.resume) {
+      args.push('-r', opts.resume);
+    }
+
+    // 打印对话内容
+    if (opts.print) {
+      args.push('-p', opts.print);
+    }
+
+    // 添加其他未知参数（透传给 claude）
+    const unknownArgs = program.args;
+    if (unknownArgs.length > 0) {
+      args.push(...unknownArgs);
+    }
+
+    return args;
+  }
+
+  /**
+   * 获取当前运行模式描述
+   */
+  _getModeDescription() {
+    const opts = this.options;
+    if (opts.continue) return '继续上次对话';
+    if (opts.resume) return `恢复对话 ${opts.resume}`;
+    if (opts.print) return `打印对话 ${opts.print}`;
+    return '新建对话';
   }
 
   /**
@@ -62,6 +124,7 @@ class MonitorApp {
 ╚═══════════════════════════════════════════════════════════╝
     `;
     console.log('\x1b[36m%s\x1b[0m', banner);
+    console.log(`🎯 运行模式: ${this._getModeDescription()}`);
     console.log(`📋 已加载 ${this.detector.getRules().length} 条检测规则`);
     console.log(`⚙️  自动回复: ${this.config.monitor.autoResponse ? '✅ 启用' : '❌ 禁用'}`);
     console.log(`🔔 系统通知: ${this.config.monitor.systemNotification ? '✅ 启用' : '❌ 禁用'}\n`);
@@ -190,7 +253,8 @@ class MonitorApp {
 
 // 启动应用
 if (require.main === module) {
-  const app = new MonitorApp();
+  const options = program.opts();
+  const app = new MonitorApp(options);
   app.start();
 }
 

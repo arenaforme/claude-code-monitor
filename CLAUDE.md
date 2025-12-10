@@ -14,16 +14,42 @@ Claude Code 监控器：监控 Claude Code CLI 输出并自动响应确认提示
 # 安装依赖
 npm install
 
-# 启动监控器
+# 启动监控器（新建对话）
 npm start
 
-# 启动并传递参数给 Claude Code
-npm start -- --help
+# 继续上次对话
+npm start -- -c
+npm start -- --continue
+
+# 恢复指定对话
+npm start -- -r <session-id>
+
+# 打印对话内容
+npm start -- -p <session-id>
+
+# 禁用自动响应（仅提醒）
+npm start -- --no-auto
+
+# 组合使用
+npm start -- -c --no-auto
+
+# 传递其他参数给 Claude Code
 npm start -- /path/to/project
 
 # 调试模式
 npm run dev
 ```
+
+## 命令行参数
+
+| 参数 | 说明 |
+|------|------|
+| `-c, --continue` | 继续上次对话（等同于 `claude -c`） |
+| `-r, --resume <id>` | 恢复指定的对话（等同于 `claude -r <id>`） |
+| `-p, --print <id>` | 打印指定对话内容（等同于 `claude -p <id>`） |
+| `--no-auto` | 禁用自动响应，仅提醒 |
+| `--help` | 显示帮助信息 |
+| `--version` | 显示版本号 |
 
 ## 快捷键
 

@@ -5,10 +5,28 @@
  * @description Claude Code 监控器的配置项
  */
 
+const os = require('os');
+
+/**
+ * 获取 Claude Code 可执行文件路径（跨平台）
+ */
+function getClaudeCommand() {
+  const platform = os.platform();
+  if (platform === 'win32') {
+    // Windows: 通常在用户目录的 AppData 或 PATH 中
+    return 'claude';  // 依赖 PATH 环境变量
+  } else if (platform === 'darwin') {
+    // macOS: Homebrew 安装路径
+    return '/opt/homebrew/bin/claude';
+  } else {
+    // Linux: 通常在 /usr/local/bin
+    return '/usr/local/bin/claude';
+  }
+}
+
 module.exports = {
-  // Claude Code 可执行文件路径
-  // macOS 通常在：/usr/local/bin/claude 或 /opt/homebrew/bin/claude
-  claudeCommand: '/opt/homebrew/bin/claude',
+  // Claude Code 可执行文件路径（自动检测平台）
+  claudeCommand: getClaudeCommand(),
 
   // 监控配置
   monitor: {
